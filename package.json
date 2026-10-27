@@ -1,0 +1,48 @@
+{
+  "name": "pyffe-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:dev": "cross-env TEST_ENV=dev playwright test",
+    "test:qa": "cross-env TEST_ENV=qa playwright test",
+    "test:functional:dev": "cross-env TEST_ENV=dev playwright test --project=functional",
+    "test:functional:qa": "cross-env TEST_ENV=qa playwright test --project=functional",
+    "test:e2e:dev": "cross-env TEST_ENV=dev playwright test --project=e2e",
+    "test:e2e:qa": "cross-env TEST_ENV=qa playwright test --project=e2e",
+    "test:smoke:dev": "cross-env TEST_ENV=dev playwright test --grep @smoke",
+    "test:smoke:qa": "cross-env TEST_ENV=qa playwright test --grep @smoke",
+    "test:regression:dev": "cross-env TEST_ENV=dev playwright test --grep @regression",
+    "test:regression:qa": "cross-env TEST_ENV=qa playwright test --grep @regression",
+    "test:notification:dev": "cross-env TEST_ENV=dev playwright test --grep @svc-notification",
+    "test:notification:qa": "cross-env TEST_ENV=qa playwright test --grep @svc-notification",
+    "test:case:dev": "cross-env TEST_ENV=dev playwright test --grep",
+    "test:case:qa": "cross-env TEST_ENV=qa playwright test --grep",
+    "test:failed:dev": "cross-env TEST_ENV=dev playwright test --last-failed",
+    "test:failed:qa": "cross-env TEST_ENV=qa playwright test --last-failed",
+    "test:list:dev": "cross-env TEST_ENV=dev playwright test --list",
+    "test:list:qa": "cross-env TEST_ENV=qa playwright test --list",
+    "test:ui:dev": "cross-env TEST_ENV=dev playwright test --ui",
+    "test:ui:qa": "cross-env TEST_ENV=qa playwright test --ui",
+    "validate:env:dev": "cross-env TEST_ENV=dev tsx scripts/validate-env.ts",
+    "validate:env:qa": "cross-env TEST_ENV=qa tsx scripts/validate-env.ts",
+    "owner:login:new:dev": "cross-env TEST_ENV=dev LOG_STDERR=1 tsx scripts/cli.ts owner-login-new",
+    "owner:login:new:qa": "cross-env TEST_ENV=qa LOG_STDERR=1 tsx scripts/cli.ts owner-login-new",
+    "owner:login:existing:dev": "cross-env TEST_ENV=dev LOG_STDERR=1 tsx scripts/cli.ts owner-login-existing",
+    "owner:login:existing:qa": "cross-env TEST_ENV=qa LOG_STDERR=1 tsx scripts/cli.ts owner-login-existing",
+    "t": "tsx scripts/run-tests.ts",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "winston": "^3.19.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
+    "cross-env": "^10.1.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,62 @@
+name: API Automation
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Môi trường chạy
+        type: choice
+        options: [dev, qa]
+        default: dev
+      suite:
+        description: Bộ test
+        type: choice
+        options: [smoke, regression]
+        default: smoke
+  pull_request:          # smoke trên dev
+  schedule:
+    - cron: '0 18 * * *' # regression trên qa theo lịch (UTC)
+
+permissions:
+  contents: read
+
+concurrency:
+  # Mỗi môi trường chỉ một lượt chạy tại một thời điểm; xếp hàng, không hủy giữa chừng để không để lại dữ liệu chưa dọn
+  group: api-tests-${{ inputs.env || (github.event_name == 'schedule' && 'qa') || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # GitHub Environments 'dev' và 'qa': mỗi môi trường có secrets riêng, cùng tên biến
+    environment: ${{ inputs.env || (github.event_name == 'schedule' && 'qa') || 'dev' }}
+    env:
+      CI: 'true'
+      TEST_ENV: ${{ inputs.env || (github.event_name == 'schedule' && 'qa') || 'dev' }}
+      # URL nằm trong config/environments/<env>.env, CI chỉ truyền secret
+      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_EMAIL_READONLY: ${{ secrets.TEST_USER_EMAIL_READONLY }}
+      AUTH_TEST_OTP: ${{ secrets.AUTH_TEST_OTP }}
+      HMAC_SECRET: ${{ secrets.HMAC_SECRET }}
+      ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22   # dùng bản LTS mà team chuẩn hóa
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run validate:env:${{ env.TEST_ENV }}
+      - name: Run tests
+        run: npm run test:${{ inputs.suite || (github.event_name == 'schedule' && 'regression') || 'smoke' }}:${{ env.TEST_ENV }}
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-reports-${{ env.TEST_ENV }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 14
