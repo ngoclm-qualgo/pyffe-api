@@ -1,27 +1,5 @@
 # pyffe-api
 
-## List services
-|No. | Service | Description |
-| --- | --- | --- |
-| 1 | Auth Service | Service for authentication and authorization |
-| 2 | Back Office Service | Service for back office operations |
-| 3 | Call Service | Service for handling calls |
-| 4 | Consent Service | Service for managing user consent |
-| 5 | DNS Configuration Service | Service for DNS configuration |
-| 6 | Family Service | Service for family management |
-| 7 | Ingestion Service | Service for data ingestion |
-| 8 | Notification Service | Service for sending notifications |
-| 9 | Platform Config Service | Service for platform operations |
-| 10 | Subscription Service | Service for subscription management |
-
-### Data Services
-
-|No. | Service | Description |
-| --- | --- | --- |
-| 11 | Data Standardization Service | Service for data standardization |
-| 12 | Data Serving Service | Service for serving data |
-| 13 | LiteLLM Proxy Service | Service for LiteLLM proxy operations |
-
 ## Running tests
 
 ### Prerequisites
