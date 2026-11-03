@@ -6,16 +6,16 @@ import { ENVIRONMENTS, type TestEnv } from './env-names';
 
 export { ENVIRONMENTS, type TestEnv };
 
-// Bắt buộc chọn môi trường rõ ràng, không có giá trị mặc định để tránh chạy nhầm
+// Environment must be chosen explicitly, no default, to avoid running against the wrong one
 const target = process.env.TEST_ENV;
 if (!ENVIRONMENTS.includes(target as TestEnv)) {
-  throw new Error(`TEST_ENV phải là một trong: ${ENVIRONMENTS.join(', ')} (hiện tại: ${target ?? 'chưa đặt'})`);
+  throw new Error(`TEST_ENV must be one of: ${ENVIRONMENTS.join(', ')} (currently: ${target ?? 'not set'})`);
 }
 
-// dotenv không ghi đè biến đã tồn tại. Thứ tự ưu tiên (cao đến thấp):
-// 1) biến môi trường của CI
-// 2) .env.<env>.local (secret cục bộ, gitignored)
-// 3) config/environments/<env>.env (giá trị không bí mật, được commit)
+// dotenv does not override variables that already exist. Priority order (high to low):
+// 1) CI environment variables
+// 2) .env.<env>.local (local secrets, gitignored)
+// 3) config/environments/<env>.env (non-secret values, committed)
 dotenv.config({ path: path.resolve(process.cwd(), `.env.${target}.local`) });
 dotenv.config({ path: path.resolve(__dirname, 'environments', `${target}.env`) });
 
@@ -23,33 +23,33 @@ const schema = z.object({
   TEST_ENV: z.enum(ENVIRONMENTS),
   BASE_URL: z.string().url(),
   DP_BASE_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
-  // Base URL backoffice (chỉ cần cho các test campaign thông báo admin); không đặt thì các test đó tự skip
+  // Backoffice base URL (only needed for admin notification campaign tests); those tests auto-skip if not set
   ADMIN_BASE_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
-  // JWT backoffice có quyền `create` trên `notifications`; không đặt thì các test campaign admin tự skip
+  // Backoffice JWT with `create` permission on `notifications`; admin campaign tests auto-skip if not set
   ADMIN_ACCESS_TOKEN: z.preprocess((v) => (v === '' ? undefined : v), z.string().optional()),
-  // Family + actor device cho test scam-alert/device/settings/phone-number được dựng tự động mỗi worker
-  // (xem src/core/fixtures/family-provisioning.ts). Đặt cả hai biến này để ghi đè — dùng nguyên một family có
-  // sẵn thay vì tạo mới — hữu ích khi family tự tạo chưa có subscription benefit một scenario cần (ví dụ FAMILY-01).
+  // Family + actor device for scam-alert/device/settings/phone-number tests, auto-provisioned per worker
+  // (see src/core/fixtures/family-provisioning.ts). Set both variables to override — reuse an existing family
+  // instead of creating one — useful when an auto-created family lacks a subscription benefit a scenario needs (e.g. FAMILY-01).
   FAMILY_ID: z.preprocess((v) => (v === '' ? undefined : v), z.string().optional()),
   ACTOR_DEVICE_ID: z.preprocess((v) => (v === '' ? undefined : v), z.string().optional()),
-  // Audience test riêng cho campaign thông báo admin (xem specs/notification-push-postman-curl-guide.md); không đặt thì các test liên quan tự skip
+  // Dedicated test audience for admin notification campaigns (see specs/notification-push-postman-curl-guide.md); related tests auto-skip if not set
   AUDIENCE_ID: z.preprocess((v) => (v === '' ? undefined : v), z.string().optional()),
-  // Không đặt (hoặc để trống) thì AuthService tự tạo một hộp thư mail.tm dùng một lần cho mỗi lần onboard
+  // If not set (or empty), AuthService creates a disposable mail.tm mailbox for each onboarding
   TEST_USER_EMAIL: z.preprocess((v) => (v === '' ? undefined : v), z.string().email().optional()),
-  // Mã verify cố định (nếu có); nếu không đặt, AuthService đọc OTP từ hộp thư mail.tm vừa tạo
+  // Fixed verification code (if any); if not set, AuthService reads the OTP from the mail.tm mailbox just created
   AUTH_TEST_OTP: z.string().optional(),
   API_TIMEOUT_MS: z.coerce.number().int().positive().default(15000),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   RETRY_COUNT: z.coerce.number().int().min(0).max(3).default(1),
-  DEVICE_ID: z.string().optional(), // không đặt thì AuthService tự sinh mỗi lần chạy
+  DEVICE_ID: z.string().optional(), // if not set, AuthService generates one for each run
   COUNTRY_CODE: z.string().min(2),
   HMAC_SECRET: z.string().min(1),
-  ENCRYPTION_KEY: z.string().min(1), // độ dài phải khớp AES-128/192/256 (16/24/32 byte)
+  ENCRYPTION_KEY: z.string().min(1), // length must match AES-128/192/256 (16/24/32 bytes)
 });
 
 export const env = schema.parse(process.env);
 
-// Khác biệt vận hành giữa các môi trường (điều chỉnh sau khi đo thực tế)
+// Operational differences between environments (adjust after measuring real behavior)
 const PROFILES = {
   dev: { workers: 4, pollTimeoutMs: 10_000, allowDestructive: true },
   qa: { workers: 2, pollTimeoutMs: 15_000, allowDestructive: false },

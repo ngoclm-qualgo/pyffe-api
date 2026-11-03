@@ -77,17 +77,42 @@ npm run test:qa -- --repeat-each=3          # check for flakiness
 
 ### 3. View the report
 
+Each run gets its own run ID (a timestamp, or `RUN_ID` if you set one), printed at the start as `[run] <runId>`, so past runs' reports aren't overwritten by the next one:
+
 ```bash
-npm run report
+npm run report -- qa            # open the most recent qa run
+npm run report -- qa <runId>    # open a specific run
+npm run report -- qa --list     # list available run ids (newest first)
 ```
 
-HTML/JUnit/JSON reports and run artifacts are written under `playwright-report/<env>/` and `test-results/<env>/`.
+HTML/JUnit/JSON reports and run artifacts are written under `playwright-report/<env>/<runId>/` and `test-results/<env>/<runId>/`.
 
 ### Other useful commands
 
 ```bash
 npm run typecheck   # type-check the whole project without emitting
 ```
+
+### Data-setup commands
+
+`scripts/cli.ts` runs flows outside the test run itself (e.g. seeding data manually) and prints the result as JSON to stdout (logs go to stderr via `LOG_STDERR=1`):
+
+| Goal | Command |
+| --- | --- |
+| Log in as a new owner (fresh mail.tm email) | `npm run owner:login:new:dev` / `npm run owner:login:new:qa` |
+| Log in as an existing owner (defaults to `TEST_USER_EMAIL`, needs `AUTH_TEST_OTP`) | `npm run owner:login:existing:dev` / `npm run owner:login:existing:qa` |
+| Log in as an existing owner with a specific email | `npm run owner:login:existing:qa -- --email a@b.c` |
+| Onboard a companion device (init / verify / accept T&C) and request a JOIN pairing code ([spec](specs/request-join.api.txt)) | `npm run companion:request-code:dev` / `npm run companion:request-code:qa` |
+
+### Supported commands
+
+All `scripts/cli.ts` commands, invokable directly with `tsx scripts/cli.ts <command>` (the npm scripts above just wrap these with the right `TEST_ENV`):
+
+| Command | Description |
+| --- | --- |
+| `owner-login-new` | Onboard a brand-new owner via a fresh mail.tm email. |
+| `owner-login-existing [--email a@b.c]` | Onboard an existing owner; defaults to `TEST_USER_EMAIL` (needs `AUTH_TEST_OTP`). |
+| `companion-request-code` | Onboard a companion device and request a JOIN pairing code; output includes the code, device id and device info. |
 
 ### CI
 `.github/workflows/api-tests.yml` runs smoke tests on dev for every pull request, and regression tests on qa nightly (18:00 UTC). It can also be triggered manually (`workflow_dispatch`) with a chosen environment and suite. Each environment maps to a GitHub Environment holding its own secrets (`TEST_USER_EMAIL`, `AUTH_TEST_OTP`, `HMAC_SECRET`, `ENCRYPTION_KEY`, ...).

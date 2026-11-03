@@ -29,8 +29,10 @@
     "owner:login:new:qa": "cross-env TEST_ENV=qa LOG_STDERR=1 tsx scripts/cli.ts owner-login-new",
     "owner:login:existing:dev": "cross-env TEST_ENV=dev LOG_STDERR=1 tsx scripts/cli.ts owner-login-existing",
     "owner:login:existing:qa": "cross-env TEST_ENV=qa LOG_STDERR=1 tsx scripts/cli.ts owner-login-existing",
+    "companion:request-code:dev": "cross-env TEST_ENV=dev LOG_STDERR=1 tsx scripts/cli.ts companion-request-code",
+    "companion:request-code:qa": "cross-env TEST_ENV=qa LOG_STDERR=1 tsx scripts/cli.ts companion-request-code",
     "t": "tsx scripts/run-tests.ts",
-    "report": "playwright show-report",
+    "report": "tsx scripts/report.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -1,0 +1,1450 @@
+components:
+  schemas:
+    AccountDeletionBlockedFamily:
+      additionalProperties: true
+      properties:
+        familyId:
+          examples:
+            - 018f4c6e-7b3a-73f7-8000-000000000001
+          type: string
+        linkedDevices:
+          items:
+            $ref: "#/components/schemas/AccountDeletionLinkedDevice"
+          type:
+            - array
+            - "null"
+        name:
+          examples:
+            - My Family
+          type: string
+      required:
+        - familyId
+        - linkedDevices
+      type: object
+    AccountDeletionEligibilityResponseBody:
+      additionalProperties: true
+      properties:
+        blockedFamilies:
+          items:
+            $ref: "#/components/schemas/AccountDeletionBlockedFamily"
+          type:
+            - array
+            - "null"
+        confirmationMethod:
+          examples:
+            - EMAIL
+          type: string
+        redactedEmail:
+          examples:
+            - joh***@gmail.com
+          type: string
+        status:
+          examples:
+            - ELIGIBLE
+          type: string
+      required:
+        - status
+      type: object
+    AccountDeletionLinkedDevice:
+      additionalProperties: true
+      properties:
+        deviceId:
+          examples:
+            - 018f4c6e-7b3a-73f7-8000-000000000004
+          type: string
+        deviceName:
+          examples:
+            - Pixel 8 Pro
+          type: string
+      required:
+        - deviceId
+      type: object
+    AuthChallengeRequest:
+      additionalProperties: true
+      properties:
+        authFlow:
+          enum:
+            - ONBOARDING
+            - SESSION_APPROVAL
+            - REFRESH_TOKEN
+            - DELETE_ACCOUNT_REQUEST
+            - DELETE_ACCOUNT
+          examples:
+            - ONBOARDING
+          type: string
+        challengeName:
+          enum:
+            - INIT_CHALLENGE
+            - TERM_CONDITION
+            - EMAIL_OTP_REQUIRED
+            - VERIFY_SSO_PROVIDER_REQUIRED
+            - CODE_CHALLENGE
+            - RESEND_OTP
+            - DELETE_ACCOUNT_CONFIRMATION
+            - QR_TOKEN_ISSUED_CHECKING
+            - QR_LOGIN_REQUIRED
+            - PARING_CODE_TOKEN_ISSUED_CHECKING
+            - PARING_CODE_LOGIN_REQUIRED
+          examples:
+            - INIT_CHALLENGE
+          type: string
+        challengeResponses:
+          additionalProperties: {}
+          type: object
+        clientMetadata:
+          additionalProperties: {}
+          type: object
+        session:
+          examples:
+            - session_1234567890
+          type: string
+      required:
+        - authFlow
+        - challengeName
+        - clientMetadata
+      type: object
+    AuthChallengeResponse:
+      additionalProperties: true
+      properties:
+        authFlow:
+          enum:
+            - LOGIN
+            - SESSION_APPROVAL
+            - REFRESH_TOKEN
+            - DELETE_ACCOUNT_REQUEST
+            - DELETE_ACCOUNT
+          examples:
+            - LOGIN
+          type: string
+        challengeName:
+          enum:
+            - INIT_CHALLENGE
+            - TERM_CONDITION
+            - EMAIL_OTP_REQUIRED
+            - VERIFY_SSO_PROVIDER_REQUIRED
+            - CODE_CHALLENGE
+            - RESEND_OTP
+            - DELETE_ACCOUNT_CONFIRMATION
+            - QR_TOKEN_ISSUED_CHECKING
+            - QR_LOGIN_REQUIRED
+            - PARING_CODE_TOKEN_ISSUED_CHECKING
+            - PARING_CODE_LOGIN_REQUIRED
+          examples:
+            - INIT_CHALLENGE
+          type: string
+        challengeParameters:
+          additionalProperties: {}
+          type: object
+        result: {}
+        session:
+          examples:
+            - session_1234567890
+          type: string
+      required:
+        - authFlow
+        - challengeName
+      type: object
+    AuthTokens:
+      additionalProperties: true
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+      required:
+        - accessToken
+        - refreshToken
+      type: object
+    CreateUserPayload:
+      additionalProperties: true
+      properties:
+        email:
+          type: string
+        name:
+          examples:
+            - John Doe
+          minLength: 1
+          type: string
+        password:
+          type: string
+      required:
+        - name
+        - email
+        - password
+      type: object
+    HealthCheckGetResponseBody:
+      additionalProperties: true
+      properties:
+        status:
+          type: string
+      required:
+        - status
+      type: object
+    HumaErrorResponse:
+      additionalProperties: true
+      properties:
+        detail:
+          examples:
+            - The request was invalid
+          type: string
+        errorCode:
+          examples:
+            - INVALID_REQUEST
+          type: string
+        errorParams:
+          additionalProperties:
+            type: string
+          examples:
+            - name: Name is required
+          type: object
+        title:
+          examples:
+            - Bad Request
+          type: string
+      required:
+        - title
+        - detail
+        - errorCode
+      type: object
+    LogoutResponse:
+      additionalProperties: true
+      properties:
+        message:
+          type: string
+      required:
+        - message
+      type: object
+    NotificationPreferenceResponse:
+      additionalProperties: true
+      properties:
+        communityAlertsEnabled:
+          examples:
+            - true
+          type: boolean
+        deviceId:
+          examples:
+            - 019cd67c-59ff-7b2a-b8a6-b1fc47b32664
+          type: string
+        familyAlertsMode:
+          enum:
+            - ALL
+            - CRITICAL_ONLY
+          examples:
+            - ALL
+          type: string
+        frequencyMode:
+          enum:
+            - IMMEDIATE
+            - DAILY_SUMMARY
+          examples:
+            - IMMEDIATE
+          type: string
+        id:
+          examples:
+            - 019cd67c-59ff-7b2a-b8a6-b1fc47b32664
+          type: string
+        productUpdatesEnabled:
+          examples:
+            - true
+          type: boolean
+        uniqueDeviceId:
+          examples:
+            - device_1234567890
+          type: string
+        updatedAt:
+          examples:
+            - "2026-04-17T10:30:00Z"
+          format: date-time
+          type: string
+        userId:
+          examples:
+            - 019cd67c-59ff-7b2a-b8a6-b1fc47b32664
+          type: string
+      required:
+        - id
+        - userId
+        - deviceId
+        - uniqueDeviceId
+        - productUpdatesEnabled
+        - communityAlertsEnabled
+        - familyAlertsMode
+        - frequencyMode
+        - updatedAt
+      type: object
+    RefreshTokenPayload:
+      additionalProperties: true
+      properties:
+        refreshToken:
+          type: string
+      required:
+        - refreshToken
+      type: object
+    RegisterFcmTokenPayload:
+      additionalProperties: true
+      properties:
+        appVersion:
+          examples:
+            - 1.0.0
+          minLength: 1
+          type: string
+        fcmToken:
+          examples:
+            - fcm_token_1234567890
+          minLength: 1
+          type: string
+        platform:
+          enum:
+            - IOS
+            - ANDROID
+          examples:
+            - IOS
+          type: string
+        role:
+          enum:
+            - OWNER
+            - MEMBER
+          examples:
+            - OWNER
+          type:
+            - string
+            - "null"
+      required:
+        - fcmToken
+        - appVersion
+        - platform
+      type: object
+    ResponseStruct {}Body:
+      additionalProperties: true
+      type: object
+    SaveNotificationPreferencePayload:
+      additionalProperties: true
+      properties:
+        communityAlertsEnabled:
+          examples:
+            - true
+          type: boolean
+        familyAlertsMode:
+          enum:
+            - ALL
+            - CRITICAL_ONLY
+          examples:
+            - ALL
+          type: string
+        frequencyMode:
+          enum:
+            - IMMEDIATE
+            - DAILY_SUMMARY
+          examples:
+            - IMMEDIATE
+          type: string
+        productUpdatesEnabled:
+          examples:
+            - true
+          type: boolean
+      required:
+        - productUpdatesEnabled
+        - communityAlertsEnabled
+        - familyAlertsMode
+        - frequencyMode
+      type: object
+    SensitiveDataResponse:
+      additionalProperties: true
+      properties:
+        accountEmail:
+          type: string
+        expiresAt:
+          format: date-time
+          type: string
+        identifier:
+          type: string
+        otp:
+          type: string
+        otpExpiredTime:
+          format: int64
+          type: integer
+        reason:
+          type: string
+        redactEmail:
+          type: string
+        userType:
+          type: string
+      type: object
+    User200:
+      additionalProperties: true
+      properties:
+        authClient:
+          examples:
+            - CONSUMER
+          type:
+            - string
+            - "null"
+        createdAt:
+          examples:
+            - "2026-01-01T00:00:00Z"
+          format: date-time
+          type: string
+        email:
+          examples:
+            - joh****@example.com
+          type: string
+        id:
+          examples:
+            - 123e4567-e89b-12d3-a456-426614174000
+          type: string
+        lastLoginAt:
+          examples:
+            - "2026-01-01T00:00:00Z"
+          format: date-time
+          type:
+            - string
+            - "null"
+        provider:
+          examples:
+            - GOOGLE
+          type:
+            - string
+            - "null"
+        status:
+          examples:
+            - ACTIVE
+          type: string
+        updatedAt:
+          examples:
+            - "2026-01-01T00:00:00Z"
+          format: date-time
+          type: string
+      required:
+        - id
+        - email
+        - status
+        - createdAt
+        - updatedAt
+      type: object
+    User201:
+      additionalProperties: true
+      properties:
+        authClient:
+          examples:
+            - CONSUMER
+          type:
+            - string
+            - "null"
+        createdAt:
+          examples:
+            - "2026-01-01T00:00:00Z"
+          format: date-time
+          type: string
+        email:
+          examples:
+            - joh****@example.com
+          type: string
+        id:
+          examples:
+            - 123e4567-e89b-12d3-a456-426614174000
+          type: string
+        lastLoginAt:
+          examples:
+            - "2026-01-01T00:00:00Z"
+          format: date-time
+          type:
+            - string
+            - "null"
+        provider:
+          examples:
+            - GOOGLE
+          type:
+            - string
+            - "null"
+        status:
+          examples:
+            - ACTIVE
+          type: string
+        updatedAt:
+          examples:
+            - "2026-01-01T00:00:00Z"
+          format: date-time
+          type: string
+      required:
+        - id
+        - email
+        - status
+        - createdAt
+        - updatedAt
+      type: object
+    VerifyTokenResponse:
+      additionalProperties: true
+      properties:
+        authClient:
+          examples:
+            - CONSUMER
+          type: string
+        deviceId:
+          examples:
+            - device_1234567890
+          type: string
+        jti:
+          examples:
+            - jti_1234567890
+          type: string
+        message:
+          examples:
+            - Token is valid
+          type: string
+        state:
+          examples:
+            - AUTHENTICATED
+          type: string
+        userId:
+          examples:
+            - 01JEMSD9XKQP7J8H2N5VWXYZ12
+          type: string
+      required:
+        - state
+        - message
+      type: object
+  securitySchemes:
+    jwtAuth:
+      bearerFormat: JWT
+      description: "JWT token for authentication. Use format: Bearer <token>"
+      scheme: Bearer
+      type: http
+info:
+  title: Safenest Auth Service
+  version: 1.0.0
+openapi: 3.1.0
+paths:
+  /api/v1/auth-service/health:
+    get:
+      operationId: get-auth-service-health-check
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckGetResponseBody"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Get Auth Service Health Check
+      tags:
+        - default
+    head:
+      operationId: head-auth-service-health-check
+      responses:
+        "200":
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Head Auth Service Health Check
+      tags:
+        - default
+  /api/v1/auth/apple/callback:
+    post:
+      operationId: apple-callback
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              contentMediaType: application/octet-stream
+              format: binary
+              type: string
+        required: true
+      responses:
+        "302":
+          description: Found
+          headers:
+            Location:
+              schema:
+                type: string
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Apple Callback
+      tags:
+        - auth
+  /api/v1/auth/challenge/anonymous:
+    post:
+      operationId: auth-challenge-anonymous
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            examples:
+              - Bearer token_1234567890
+            type: string
+        - in: header
+          name: x-language
+          schema:
+            examples:
+              - en
+            type: string
+        - in: header
+          name: x-correlation-id
+          schema:
+            examples:
+              - req_1234567890
+            type: string
+        - in: header
+          name: x-device-id
+          schema:
+            examples:
+              - device_1234567890
+            type: string
+        - in: header
+          name: x-country-code
+          schema:
+            examples:
+              - VN
+            type: string
+        - in: header
+          name: x-device-information
+          schema:
+            examples:
+              - eyJicmFuZCI6IkFwcGxlIiwiZGV2aWNlTmFtZSI6ImlQaG9uZSAxNyIsImRldmljZU1vZGVsIjoiaVBob25lMTgsMSIsImRldmljZUlkZW50aWZpZXIiOiJpUGhvbmUxOCwxIiwicGxhdGZvcm0iOiJpT1MiLCJvc1ZlcnNpb24iOiIyNCIsIm9zQXBpTGV2ZWwiOm51bGwsInRvdGFsTWVtb3J5Qnl0ZXMiOjg1ODk5MzQ1OTIsInNvY01vZGVsIjpudWxsLCJhcHBWZXJzaW9uIjoiMS4wLjAifQ==
+            type: string
+        - in: header
+          name: x-signature
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthChallengeRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthChallengeResponse"
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Auth Challenge Anonymous
+      tags:
+        - auth
+        - challenge
+  /api/v1/auth/challenge/authenticated:
+    post:
+      operationId: auth-challenge-authenticated
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            examples:
+              - Bearer token_1234567890
+            type: string
+        - in: header
+          name: x-language
+          schema:
+            examples:
+              - en
+            type: string
+        - in: header
+          name: x-correlation-id
+          schema:
+            examples:
+              - req_1234567890
+            type: string
+        - in: header
+          name: x-device-id
+          schema:
+            examples:
+              - device_1234567890
+            type: string
+        - in: header
+          name: x-country-code
+          schema:
+            examples:
+              - VN
+            type: string
+        - in: header
+          name: x-device-information
+          schema:
+            examples:
+              - eyJicmFuZCI6IkFwcGxlIiwiZGV2aWNlTmFtZSI6ImlQaG9uZSAxNyIsImRldmljZU1vZGVsIjoiaVBob25lMTgsMSIsImRldmljZUlkZW50aWZpZXIiOiJpUGhvbmUxOCwxIiwicGxhdGZvcm0iOiJpT1MiLCJvc1ZlcnNpb24iOiIyNCIsIm9zQXBpTGV2ZWwiOm51bGwsInRvdGFsTWVtb3J5Qnl0ZXMiOjg1ODk5MzQ1OTIsInNvY01vZGVsIjpudWxsLCJhcHBWZXJzaW9uIjoiMS4wLjAifQ==
+            type: string
+        - in: header
+          name: x-signature
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthChallengeRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthChallengeResponse"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - jwtAuth: []
+      summary: Auth Challenge Authenticated
+      tags:
+        - auth
+        - challenge
+  /api/v1/auth/logout:
+    post:
+      operationId: logout
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutResponse"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - jwtAuth: []
+      summary: Logout
+      tags:
+        - auth
+  /api/v1/auth/refresh:
+    post:
+      operationId: refresh-tokens
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            examples:
+              - Bearer token_1234567890
+            type: string
+        - in: header
+          name: x-language
+          schema:
+            examples:
+              - en
+            type: string
+        - in: header
+          name: x-correlation-id
+          schema:
+            examples:
+              - req_1234567890
+            type: string
+        - in: header
+          name: x-device-id
+          schema:
+            examples:
+              - device_1234567890
+            type: string
+        - in: header
+          name: x-country-code
+          schema:
+            examples:
+              - VN
+            type: string
+        - in: header
+          name: x-device-information
+          schema:
+            examples:
+              - eyJicmFuZCI6IkFwcGxlIiwiZGV2aWNlTmFtZSI6ImlQaG9uZSAxNyIsImRldmljZU1vZGVsIjoiaVBob25lMTgsMSIsImRldmljZUlkZW50aWZpZXIiOiJpUGhvbmUxOCwxIiwicGxhdGZvcm0iOiJpT1MiLCJvc1ZlcnNpb24iOiIyNCIsIm9zQXBpTGV2ZWwiOm51bGwsInRvdGFsTWVtb3J5Qnl0ZXMiOjg1ODk5MzQ1OTIsInNvY01vZGVsIjpudWxsLCJhcHBWZXJzaW9uIjoiMS4wLjAifQ==
+            type: string
+        - in: header
+          name: x-signature
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenPayload"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Refresh Tokens
+      tags:
+        - auth
+  /api/v1/devices/fcm-token:
+    delete:
+      operationId: remove-fcm-token
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            examples:
+              - Bearer token_1234567890
+            type: string
+        - in: header
+          name: x-language
+          schema:
+            examples:
+              - en
+            type: string
+        - in: header
+          name: x-correlation-id
+          schema:
+            examples:
+              - req_1234567890
+            type: string
+        - in: header
+          name: x-device-id
+          schema:
+            examples:
+              - device_1234567890
+            type: string
+        - in: header
+          name: x-country-code
+          schema:
+            examples:
+              - VN
+            type: string
+        - in: header
+          name: x-device-information
+          schema:
+            examples:
+              - eyJicmFuZCI6IkFwcGxlIiwiZGV2aWNlTmFtZSI6ImlQaG9uZSAxNyIsImRldmljZU1vZGVsIjoiaVBob25lMTgsMSIsImRldmljZUlkZW50aWZpZXIiOiJpUGhvbmUxOCwxIiwicGxhdGZvcm0iOiJpT1MiLCJvc1ZlcnNpb24iOiIyNCIsIm9zQXBpTGV2ZWwiOm51bGwsInRvdGFsTWVtb3J5Qnl0ZXMiOjg1ODk5MzQ1OTIsInNvY01vZGVsIjpudWxsLCJhcHBWZXJzaW9uIjoiMS4wLjAifQ==
+            type: string
+        - in: header
+          name: x-signature
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseStruct {}Body"
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Remove FCM Token
+      tags:
+        - devices
+        - fcm
+    post:
+      operationId: register-or-update-fcm-token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterFcmTokenPayload"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseStruct {}Body"
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Register or Update FCM Token
+      tags:
+        - devices
+        - fcm
+  /api/v1/users:
+    post:
+      operationId: create-user
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            examples:
+              - Bearer token_1234567890
+            type: string
+        - in: header
+          name: x-language
+          schema:
+            examples:
+              - en
+            type: string
+        - in: header
+          name: x-correlation-id
+          schema:
+            examples:
+              - req_1234567890
+            type: string
+        - in: header
+          name: x-device-id
+          schema:
+            examples:
+              - device_1234567890
+            type: string
+        - in: header
+          name: x-country-code
+          schema:
+            examples:
+              - VN
+            type: string
+        - in: header
+          name: x-device-information
+          schema:
+            examples:
+              - eyJicmFuZCI6IkFwcGxlIiwiZGV2aWNlTmFtZSI6ImlQaG9uZSAxNyIsImRldmljZU1vZGVsIjoiaVBob25lMTgsMSIsImRldmljZUlkZW50aWZpZXIiOiJpUGhvbmUxOCwxIiwicGxhdGZvcm0iOiJpT1MiLCJvc1ZlcnNpb24iOiIyNCIsIm9zQXBpTGV2ZWwiOm51bGwsInRvdGFsTWVtb3J5Qnl0ZXMiOjg1ODk5MzQ1OTIsInNvY01vZGVsIjpudWxsLCJhcHBWZXJzaW9uIjoiMS4wLjAifQ==
+            type: string
+        - in: header
+          name: x-signature
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserPayload"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User201"
+          description: Created
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - jwtAuth: []
+      summary: Create User
+      tags:
+        - users
+  /api/v1/users/me:
+    get:
+      operationId: get-current-user
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User200"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - jwtAuth: []
+      summary: Get Current User
+      tags:
+        - users
+  /api/v1/users/me/account-deletion/eligibility:
+    get:
+      operationId: get-account-deletion-eligibility
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountDeletionEligibilityResponseBody"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - jwtAuth: []
+      summary: Get Account Deletion Eligibility
+      tags:
+        - users
+        - account-deletion
+  /api/v1/users/me/notification-preferences:
+    get:
+      operationId: get-my-notification-preferences
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPreferenceResponse"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - jwtAuth: []
+      summary: Get My Notification Preferences
+      tags:
+        - users
+        - notification-preferences
+    put:
+      operationId: update-my-notification-preferences
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            examples:
+              - Bearer token_1234567890
+            type: string
+        - in: header
+          name: x-language
+          schema:
+            examples:
+              - en
+            type: string
+        - in: header
+          name: x-correlation-id
+          schema:
+            examples:
+              - req_1234567890
+            type: string
+        - in: header
+          name: x-device-id
+          schema:
+            examples:
+              - device_1234567890
+            type: string
+        - in: header
+          name: x-country-code
+          schema:
+            examples:
+              - VN
+            type: string
+        - in: header
+          name: x-device-information
+          schema:
+            examples:
+              - eyJicmFuZCI6IkFwcGxlIiwiZGV2aWNlTmFtZSI6ImlQaG9uZSAxNyIsImRldmljZU1vZGVsIjoiaVBob25lMTgsMSIsImRldmljZUlkZW50aWZpZXIiOiJpUGhvbmUxOCwxIiwicGxhdGZvcm0iOiJpT1MiLCJvc1ZlcnNpb24iOiIyNCIsIm9zQXBpTGV2ZWwiOm51bGwsInRvdGFsTWVtb3J5Qnl0ZXMiOjg1ODk5MzQ1OTIsInNvY01vZGVsIjpudWxsLCJhcHBWZXJzaW9uIjoiMS4wLjAifQ==
+            type: string
+        - in: header
+          name: x-signature
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveNotificationPreferencePayload"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPreferenceResponse"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Forbidden
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - jwtAuth: []
+      summary: Update My Notification Preferences
+      tags:
+        - users
+        - notification-preferences
+  /api/v1/users/{id}:
+    get:
+      operationId: get-user-by-id
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            examples:
+              - Bearer token_1234567890
+            type: string
+        - in: header
+          name: x-language
+          schema:
+            examples:
+              - en
+            type: string
+        - in: header
+          name: x-correlation-id
+          schema:
+            examples:
+              - req_1234567890
+            type: string
+        - in: header
+          name: x-device-id
+          schema:
+            examples:
+              - device_1234567890
+            type: string
+        - in: header
+          name: x-country-code
+          schema:
+            examples:
+              - VN
+            type: string
+        - in: header
+          name: x-device-information
+          schema:
+            examples:
+              - eyJicmFuZCI6IkFwcGxlIiwiZGV2aWNlTmFtZSI6ImlQaG9uZSAxNyIsImRldmljZU1vZGVsIjoiaVBob25lMTgsMSIsImRldmljZUlkZW50aWZpZXIiOiJpUGhvbmUxOCwxIiwicGxhdGZvcm0iOiJpT1MiLCJvc1ZlcnNpb24iOiIyNCIsIm9zQXBpTGV2ZWwiOm51bGwsInRvdGFsTWVtb3J5Qnl0ZXMiOjg1ODk5MzQ1OTIsInNvY01vZGVsIjpudWxsLCJhcHBWZXJzaW9uIjoiMS4wLjAifQ==
+            type: string
+        - in: header
+          name: x-signature
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            examples:
+              - 01JEMSD9XKQP7J8H2N5VWXYZ12
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User200"
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Get User By ID
+      tags:
+        - users
+  /healthcheck:
+    get:
+      operationId: get-health-check
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckGetResponseBody"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Get Health Check
+      tags:
+        - default
+    head:
+      operationId: head-health-check
+      responses:
+        "200":
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Head Health Check
+      tags:
+        - default
+  /internal/api/v1/auth/verify-token:
+    post:
+      operationId: verify-token
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            examples:
+              - Bearer token_1234567890
+            type: string
+        - in: header
+          name: x-language
+          schema:
+            examples:
+              - en
+            type: string
+        - in: header
+          name: x-correlation-id
+          schema:
+            examples:
+              - req_1234567890
+            type: string
+        - in: header
+          name: x-device-id
+          schema:
+            examples:
+              - device_1234567890
+            type: string
+        - in: header
+          name: x-country-code
+          schema:
+            examples:
+              - VN
+            type: string
+        - in: header
+          name: x-device-information
+          schema:
+            examples:
+              - eyJicmFuZCI6IkFwcGxlIiwiZGV2aWNlTmFtZSI6ImlQaG9uZSAxNyIsImRldmljZU1vZGVsIjoiaVBob25lMTgsMSIsImRldmljZUlkZW50aWZpZXIiOiJpUGhvbmUxOCwxIiwicGxhdGZvcm0iOiJpT1MiLCJvc1ZlcnNpb24iOiIyNCIsIm9zQXBpTGV2ZWwiOm51bGwsInRvdGFsTWVtb3J5Qnl0ZXMiOjg1ODk5MzQ1OTIsInNvY01vZGVsIjpudWxsLCJhcHBWZXJzaW9uIjoiMS4wLjAifQ==
+            type: string
+        - in: header
+          name: x-signature
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyTokenResponse"
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Verify Token
+      tags:
+        - internal
+        - auth
+  /internal/api/v1/sensitive-data/{key}:
+    get:
+      operationId: get-sensitive-data
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            examples:
+              - e3b0c44298fc1c149afbf4c8996fb924
+            type: string
+        - explode: false
+          in: query
+          name: removeCache
+          schema:
+            examples:
+              - true
+            type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensitiveDataResponse"
+          description: OK
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Unprocessable Entity
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HumaErrorResponse"
+          description: Internal Server Error
+      security:
+        - {}
+      summary: Get Sensitive Data
+      tags:
+        - internal
+security:
+  - jwtAuth: []

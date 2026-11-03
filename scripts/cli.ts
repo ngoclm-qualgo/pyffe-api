@@ -1,21 +1,45 @@
 // scripts/cli.ts
-// Lệnh dựng dữ liệu: đăng nhập owner, in kết quả ra stdout (log đi sang stderr nhờ LOG_STDERR=1).
-//   npm run owner:login:new:qa                          -> accessToken, dùng email mail.tm mới
-//   npm run owner:login:existing:qa [-- --email a@b.c]  -> accessToken, dùng email có sẵn (mặc định TEST_USER_EMAIL, cần AUTH_TEST_OTP)
+// Data-setup commands: log in as owner, print the full API response payload to stdout as JSON (logs go to stderr via LOG_STDERR=1).
+//   npm run owner:login:new:qa                          -> using a new mail.tm email
+//   npm run owner:login:existing:qa [-- --email a@b.c]  -> using an existing email (defaults to TEST_USER_EMAIL, needs AUTH_TEST_OTP)
+//   npm run companion:request-code:qa                   -> companion onboarding (init/verify/accept T&C) + request pairing code (specs/request-join.api.txt)
+import { randomUUID } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { request } from '@playwright/test';
 import { env } from '../config/env';
 import { AuthService } from '../src/services/auth/auth.service';
+import { TokenManager } from '../src/services/auth/token-manager';
 import { provisionEmailAddress } from '../src/services/auth/otp-provider';
+import { defaultDevice } from '../src/services/auth/request-signer';
+import { ApiClient } from '../src/core/client/api-client';
+import { CompanionService } from '../src/services/family/companion.service';
 import { createLogger } from '../src/core/utils/logger';
+import type { ChallengeResponse } from '../src/services/auth/auth.schema';
 
 const log = createLogger('cli');
 
-async function ownerLogin(email?: string): Promise<string> {
+async function ownerLogin(email?: string): Promise<ChallengeResponse> {
   const ctx = await request.newContext({ baseURL: env.BASE_URL });
   try {
-    const tokens = await new AuthService(ctx).onboard(email);
-    return tokens.accessToken;
+    return await new AuthService(ctx).onboardRaw(email);
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/** Companion flow: onboard (init -> CODE_CHALLENGE verify -> accept T&C), then request a JOIN pairing code. */
+async function companionRequestCode(): Promise<unknown> {
+  const ctx = await request.newContext({ baseURL: env.BASE_URL });
+  try {
+    const correlationId = randomUUID();
+    const companionLog = createLogger('companion').child({ correlationId });
+    const device = defaultDevice();
+    const auth = new AuthService(ctx, device, correlationId, undefined, companionLog);
+    const tokens = new TokenManager(auth, undefined, 'companion');
+    const api = new ApiClient(ctx, tokens, companionLog, correlationId);
+    const res = await new CompanionService(api).createRequest(tokens.deviceId, 'JOIN');
+    const pairing = await api.json<Record<string, unknown>>(res, 201);
+    return { ...pairing, deviceId: device.id, deviceInfo: device.info };
   } finally {
     await ctx.dispose();
   }
@@ -27,16 +51,19 @@ async function main() {
 
   switch (command) {
     case 'owner-login-new':
-      process.stdout.write(`${await ownerLogin(await provisionEmailAddress())}\n`);
+      process.stdout.write(`${JSON.stringify(await ownerLogin(await provisionEmailAddress()), null, 2)}\n`);
       break;
     case 'owner-login-existing': {
       const email = values.email ?? env.TEST_USER_EMAIL;
-      if (!email) throw new Error('Cần --email hoặc TEST_USER_EMAIL (kèm AUTH_TEST_OTP) cho owner có sẵn');
-      process.stdout.write(`${await ownerLogin(email)}\n`);
+      if (!email) throw new Error('Requires --email or TEST_USER_EMAIL (with AUTH_TEST_OTP) for an existing owner');
+      process.stdout.write(`${JSON.stringify(await ownerLogin(email), null, 2)}\n`);
       break;
     }
+    case 'companion-request-code':
+      process.stdout.write(`${JSON.stringify(await companionRequestCode(), null, 2)}\n`);
+      break;
     default:
-      throw new Error(`Lệnh không hỗ trợ: ${command ?? '(trống)'}. Dùng: owner-login-new | owner-login-existing`);
+      throw new Error(`Unsupported command: ${command ?? '(empty)'}. Use: owner-login-new | owner-login-existing | companion-request-code`);
   }
 }
 
