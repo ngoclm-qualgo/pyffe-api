@@ -48,11 +48,11 @@ Three code layers, each with one job:
 ## Test case
 
 ```ts
-test.describe('Gia hạn phiên onboarding', { tag: ['@svc-auth', '@regression'] }, () => {
-  test('AUTH-08 refresh token cũ bị từ chối sau khi đã dùng', { tag: '@negative' }, async ({ authService }) => {
-    const t1 = await test.step('Người dùng onboarding', () => authService.onboarding());
-    await test.step('Gia hạn phiên lần đầu thành công', async () => { /* ... */ });
-    await test.step('Dùng lại refresh token cũ bị từ chối', async () => { /* ... */ });
+test.describe('Session renewal onboarding', { tag: ['@svc-auth', '@regression'] }, () => {
+  test('AUTH-08 old refresh token is rejected after being used', { tag: '@negative' }, async ({ authService }) => {
+    const t1 = await test.step('User onboarding', () => authService.onboarding());
+    await test.step('First session renewal succeeds', async () => { /* ... */ });
+    await test.step('Reusing old refresh token is rejected', async () => { /* ... */ });
   });
 });
 ```
