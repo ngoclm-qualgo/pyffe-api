@@ -6,13 +6,13 @@ on:
         description: Environment to run
         type: choice
         options: [dev, qa]
-        default: dev
+        default: qa
       suite:
         description: Test suite
         type: choice
         options: [smoke, regression]
         default: smoke
-  pull_request:          # smoke on dev
+  pull_request:          # smoke on qa
   schedule:
     - cron: '0 18 * * *' # regression on qa, scheduled (UTC)
 
@@ -21,18 +21,19 @@ permissions:
 
 concurrency:
   # Only one run per environment at a time; queue instead of cancelling, so no run leaves data uncleaned
-  group: api-tests-${{ inputs.env || (github.event_name == 'schedule' && 'qa') || 'dev' }}
+  group: api-tests-${{ inputs.env || 'qa' }}
   cancel-in-progress: false
 
 jobs:
   api-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # GitHub Environments 'dev' and 'qa': each has its own secrets, same variable names
-    environment: ${{ inputs.env || (github.event_name == 'schedule' && 'qa') || 'dev' }}
+    # GitHub Environments 'dev' and 'qa': each has its own secrets, same variable names.
+    # Defaults to qa — dev has no secrets configured yet.
+    environment: ${{ inputs.env || 'qa' }}
     env:
       CI: 'true'
-      TEST_ENV: ${{ inputs.env || (github.event_name == 'schedule' && 'qa') || 'dev' }}
+      TEST_ENV: ${{ inputs.env || 'qa' }}
       # URL lives in config/environments/<env>.env; CI only passes the secret
       TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
       TEST_USER_EMAIL_READONLY: ${{ secrets.TEST_USER_EMAIL_READONLY }}
