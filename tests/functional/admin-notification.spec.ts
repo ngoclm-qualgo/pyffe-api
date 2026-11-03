@@ -1,17 +1,17 @@
 // tests/functional/admin-notification.spec.ts
-// Feature: campaign thông báo admin (backoffice) — product announcement, community update.
-// Đây là scenario thông báo duy nhất mà nội dung (title/description) lấy lại được qua API (create + dispatches),
-// nên là nơi kiểm tra "không nhắc thương hiệu cũ" tự động được cho phần notification.
+// Feature: admin notification campaigns (back office) — product announcement, community update.
+// This is the only notification scenario where content (title/description) can be retrieved back via API
+// (create + dispatches), so it's where the automated "no legacy brand mentions" check is covered for notifications.
 import { test } from '../../src/core/fixtures/api.fixture';
 import { env } from '../../config/env';
 
-test.describe('Campaign thông báo admin', { tag: ['@svc-notification', '@svc-back-office', '@regression'] }, () => {
+test.describe('Admin notification campaign', { tag: ['@svc-notification', '@svc-back-office', '@regression'] }, () => {
   test.skip(
     !env.ADMIN_BASE_URL || !env.ADMIN_ACCESS_TOKEN || !env.AUDIENCE_ID,
-    'Cần ADMIN_BASE_URL, ADMIN_ACCESS_TOKEN (quyền create trên notifications) và AUDIENCE_ID trong .env.<env>.local',
+    'Requires ADMIN_BASE_URL, ADMIN_ACCESS_TOKEN (create permission on notifications), and AUDIENCE_ID in .env.<env>.local',
   );
 
-  test('ADMIN-01 product announcement được tạo, dispatch và không nhắc thương hiệu cũ', async ({ adminNotificationSteps }) => {
+  test('ADMIN-01 product announcement is created, dispatched, and has no legacy brand mentions', async ({ adminNotificationSteps }) => {
     const title = 'Pyffe security update';
     const description = 'Open Pyffe to review the latest protection update.';
 
@@ -23,7 +23,7 @@ test.describe('Campaign thông báo admin', { tag: ['@svc-notification', '@svc-b
     await adminNotificationSteps.expectDispatchedWithoutForbiddenBrand(dispatchRes);
   });
 
-  test('ADMIN-02 community update được tạo, dispatch và không nhắc thương hiệu cũ', async ({ adminNotificationSteps }) => {
+  test('ADMIN-02 community update is created, dispatched, and has no legacy brand mentions', async ({ adminNotificationSteps }) => {
     const title = 'Pyffe community update';
     const description = 'A new Pyffe community update is available.';
 
