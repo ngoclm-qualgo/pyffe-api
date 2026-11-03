@@ -2,7 +2,7 @@
 import type { AuthService } from './auth.service';
 import type { TokenResponse } from './auth.schema';
 
-// accessToken là JWT: đọc thời điểm hết hạn từ claim exp (tính bằng giây)
+// accessToken is a JWT: read the expiry from the exp claim (in seconds)
 function jwtExpiresAt(jwt: string): number {
   const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString('utf8'));
   return payload.exp * 1000;
@@ -15,17 +15,17 @@ export class TokenManager {
 
   constructor(
     private readonly auth: AuthService,
-    private readonly email?: string, // không đặt thì mỗi lần onboarding tự tạo hộp thư mail.tm mới; bỏ qua khi mode = 'companion'
-    private readonly mode: 'email' | 'companion' = 'email', // 'companion': dùng onboardCompanion (không cần email/OTP) cho device thứ hai join family
-    private readonly skewMs = 10_000, // accessToken mẫu chỉ sống 60 giây nên đệm ngắn
+    private readonly email?: string, // if unset, each onboarding creates a new mail.tm mailbox; ignored when mode = 'companion'
+    private readonly mode: 'email' | 'companion' = 'email', // 'companion': uses onboardCompanion (no email/OTP needed) for the second device joining the family
+    private readonly skewMs = 10_000, // the sample accessToken only lives 60 seconds so keep the buffer short
   ) {}
 
-  /** Device id đã dùng để lấy JWT — cần khớp với header x-device-id ở các API family-scoped. */
+  /** Device id used to get the JWT — must match the x-device-id header on family-scoped APIs. */
   get deviceId(): string { return this.auth.deviceId; }
 
   async getAccessToken(): Promise<string> {
     if (this.token && Date.now() < this.token.expiresAt - this.skewMs) return this.token.value;
-    // Chỉ một lần làm mới tại một thời điểm trong worker
+    // Only one refresh at a time within the worker
     this.inflight ??= this.renew().finally(() => { this.inflight = undefined; });
     return this.inflight;
   }
@@ -33,7 +33,7 @@ export class TokenManager {
   invalidate() { this.token = undefined; }
 
   private async renew(): Promise<string> {
-    // Ưu tiên refreshToken (luôn lưu token mới); thất bại thì chạy lại luồng onboarding
+    // Prefer refreshToken (always store the new tokens); fall back to re-running onboarding on failure
     const t = (await this.tryRefresh()) ?? (await this.onboard());
     this.token = { value: t.accessToken, expiresAt: jwtExpiresAt(t.accessToken) };
     this.refreshToken = t.refreshToken;

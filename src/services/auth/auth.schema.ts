@@ -4,19 +4,19 @@ import { z } from 'zod';
 const tokenPair = z.object({ accessToken: z.string().min(1), refreshToken: z.string().min(1) });
 export type TokenResponse = z.infer<typeof tokenPair>;
 
-// Response thành công của mọi bước challenge (AuthChallengeResponse trong specs/auth-service.yml)
+// Success response for every challenge step (AuthChallengeResponse in specs/auth-service.yml)
 export const challengeResponseSchema = z
   .object({
     authFlow: z.string(),
-    challengeName: z.string(), // challenge kế tiếp client phải làm
+    challengeName: z.string(), // next challenge the client must complete
     challengeParameters: z.record(z.string(), z.unknown()).optional(),
     session: z.string().optional(),
-    result: z.unknown().optional(), // chứa token khi luồng hoàn tất
+    result: z.unknown().optional(), // holds tokens when the flow completes
   })
   .passthrough();
 export type ChallengeResponse = z.infer<typeof challengeResponseSchema>;
 
-/** Lấy token từ `result` hoặc từ chính body (response của refresh là AuthTokens). */
+/** Extract tokens from `result`, or from the body itself (refresh response is AuthTokens). */
 export function extractTokens(body: unknown): TokenResponse | undefined {
   const obj = body as { result?: unknown } | null;
   const nested = tokenPair.safeParse(obj?.result);
@@ -25,7 +25,7 @@ export function extractTokens(body: unknown): TokenResponse | undefined {
   return flat.success ? flat.data : undefined;
 }
 
-// Response lỗi (HumaErrorResponse trong specs/auth-service.yml)
+// Error response (HumaErrorResponse in specs/auth-service.yml)
 export const problemSchema = z.object({
   title: z.string(),
   detail: z.string(),

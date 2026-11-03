@@ -2,12 +2,12 @@
 import { env } from '../../../config/env';
 import { createMailbox, visibleText, type Mailbox } from './mailbox';
 
-// Hộp thư mail.tm do provisionEmailAddress tạo, tra theo địa chỉ
+// mail.tm mailboxes created by provisionEmailAddress, keyed by address
 const mailboxes = new Map<string, Mailbox>();
 
 /**
- * Tạo một hộp thư mail.tm dùng một lần (địa chỉ ngẫu nhiên) cho lần onboarding tiếp theo.
- * Dùng khi không cấu hình TEST_USER_EMAIL cố định.
+ * Create a one-time mail.tm mailbox (random address) for the next onboarding.
+ * Used when TEST_USER_EMAIL isn't configured.
  */
 export async function provisionEmailAddress(): Promise<string> {
   const mailbox = await createMailbox();
@@ -20,18 +20,18 @@ function extractCode(subject: string, html: string): string | undefined {
 }
 
 /**
- * Lấy mã verify của luồng email. Không log mã này.
- * Cách 1 (khuyến nghị cho môi trường ổn định): mã cố định qua AUTH_TEST_OTP.
- * Cách 2 (khi backend sinh OTP thật): đọc email trong hộp thư mail.tm đã tạo bằng provisionEmailAddress
- * (không cần API key). TEST_USER_EMAIL cố định thì phải dùng AUTH_TEST_OTP.
+ * Get the verification code for the email flow. Never log this code.
+ * Option 1 (recommended for stable environments): fixed code via AUTH_TEST_OTP.
+ * Option 2 (when the backend generates a real OTP): read the email from the mail.tm mailbox
+ * created by provisionEmailAddress (no API key needed). A fixed TEST_USER_EMAIL requires AUTH_TEST_OTP.
  */
 export async function getVerificationCode(email: string): Promise<string> {
   if (env.AUTH_TEST_OTP) return env.AUTH_TEST_OTP;
 
   const mailbox = mailboxes.get(email);
-  if (!mailbox) throw new Error(`Không đọc được hộp thư ${email}: đặt AUTH_TEST_OTP hoặc để provisionEmailAddress tạo hộp thư`);
+  if (!mailbox) throw new Error(`Cannot read mailbox ${email}: set AUTH_TEST_OTP or let provisionEmailAddress create the mailbox`);
   const mail = await mailbox.waitForEmail();
   const code = extractCode(mail.subject, mail.body);
-  if (!code) throw new Error(`Email gửi tới ${email} không chứa mã verify`);
+  if (!code) throw new Error(`Email sent to ${email} does not contain a verification code`);
   return code;
 }
