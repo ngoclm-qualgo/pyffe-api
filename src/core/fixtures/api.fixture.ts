@@ -34,22 +34,22 @@ type TestFixtures = {
   phoneNumberSteps: PhoneNumberSteps;
   adminNotificationService: AdminNotificationService;
   adminNotificationSteps: AdminNotificationSteps;
-  /** Companion device join family rồi đặt SUSPENDED; mỗi test tự dựng/dọn riêng — xem family-provisioning.ts. */
+  /** Companion device joins the family then gets SUSPENDED; each test sets up/tears down its own — see family-provisioning.ts. */
   targetDevice: string;
 };
 type WorkerFixtures = { tokens: TokenManager; family: FamilyContext };
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
-  // Một token manager cho mỗi worker
+  // One token manager per worker
   tokens: [async ({ playwright }, use) => {
     const ctx = await playwright.request.newContext({ baseURL: env.BASE_URL });
     await use(new TokenManager(new AuthService(ctx), env.TEST_USER_EMAIL));
     await ctx.dispose();
   }, { scope: 'worker' }],
 
-  // Family dùng chung cho mọi test trong worker (tạo + xóa qua specs/familyservice.yml, xem family-provisioning.ts).
-  // FAMILY_ID/ACTOR_DEVICE_ID thủ công trong .env.<env>.local (nếu đặt) được ưu tiên dùng nguyên trạng, không tạo/xóa —
-  // hữu ích khi family tự tạo mới chưa có subscription benefit mà một scenario cần (ví dụ FAMILY-01 cần quyền chặn gọi).
+  // Family shared across every test in the worker (created + deleted via specs/familyservice.yml, see family-provisioning.ts).
+  // A manual FAMILY_ID/ACTOR_DEVICE_ID in .env.<env>.local (if set) takes priority and is used as-is, with no create/delete —
+  // useful when a freshly created family lacks a subscription benefit a scenario needs (e.g. FAMILY-01 needs call-blocking permission).
   family: [async ({ playwright, tokens }, use) => {
     if (env.FAMILY_ID && env.ACTOR_DEVICE_ID) {
       await use({ familyId: env.FAMILY_ID, actorDeviceId: env.ACTOR_DEVICE_ID });
@@ -65,7 +65,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await use({ familyId, actorDeviceId });
 
     const res = await familyService.deleteFamily(familyId, actorDeviceId);
-    if (!res.ok()) familyLog.warn('Dọn dẹp family test không thành công', { familyId, status: res.status() });
+    if (!res.ok()) familyLog.warn('Failed to clean up test family', { familyId, status: res.status() });
     await ctx.dispose();
   }, { scope: 'worker' }],
 
@@ -77,7 +77,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await ctx.dispose();
   },
 
-  // Service riêng cho test luồng auth (không qua TokenManager/ApiClient đã có token)
+  // Dedicated service for auth flow tests (bypasses TokenManager/ApiClient, which already have a token)
   authService: async ({ playwright }, use, testInfo) => {
     const ctx = await playwright.request.newContext({ baseURL: env.BASE_URL });
     const correlationId = randomUUID();
@@ -86,20 +86,20 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await ctx.dispose();
   },
 
-  // Steps: các bước người dùng dựng trên service, spec chỉ gọi các bước này
+  // Steps: user actions built on top of the service; specs only call these steps
   onboardingSteps: async ({ authService }, use) => use(new OnboardingSteps(authService)),
   sessionSteps: async ({ authService }, use) => use(new SessionSteps(authService)),
 
-  // Scenario family (scam-alert, thiết bị, cài đặt, số điện thoại): dùng chung token người dùng qua `api`
+  // Family scenarios (scam-alert, device, settings, phone-number): share the user token via `api`
   familyService: async ({ api }, use) => use(new FamilyService(api)),
   scamAlertSteps: async ({ familyService, family }, use) => use(new ScamAlertSteps(familyService, family)),
   deviceSteps: async ({ familyService, family }, use) => use(new DeviceSteps(familyService, family)),
   settingsSteps: async ({ familyService, family }, use) => use(new SettingsSteps(familyService, family)),
   phoneNumberSteps: async ({ familyService, family }, use) => use(new PhoneNumberSteps(familyService, family)),
 
-  // Thiết bị thành viên thứ hai (companion): join family rồi đặt SUSPENDED, dùng làm TARGET_DEVICE_ID cho
-  // DEVICE-01/DEVICE-02. Test-scoped (không phải worker) nên mỗi test có device riêng, không còn bị "tiêu thụ"
-  // chéo giữa các lần chạy như khi TARGET_DEVICE_ID là một UUID cố định trong .env.<env>.local.
+  // Second member device (companion): joins the family then gets SUSPENDED, used as TARGET_DEVICE_ID for
+  // DEVICE-01/DEVICE-02. Test-scoped (not worker-scoped) so each test gets its own device, no longer "consumed"
+  // across runs the way it was when TARGET_DEVICE_ID was a fixed UUID in .env.<env>.local.
   targetDevice: async ({ playwright, familyService, family }, use, testInfo) => {
     const ctx = await playwright.request.newContext({ baseURL: env.BASE_URL });
     const correlationId = randomUUID();
@@ -113,16 +113,16 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 
     await use(deviceId);
 
-    // Owner xóa device (không phải companion tự LEAVE): đổi deviceStatus có vẻ vô hiệu hóa JWT của companion,
-    // nên lúc dọn dẹp companion không còn gọi API được. Idempotent — DEVICE-02 có thể đã xóa device này rồi.
+    // Owner removes the device (not companion self-LEAVE): changing deviceStatus appears to invalidate the companion's JWT,
+    // so by cleanup time the companion can no longer call the API. Idempotent — DEVICE-02 may have already deleted this device.
     const removeRes = await familyService.removeDevice(family.familyId, family.actorDeviceId, deviceId);
     if (!removeRes.ok() && removeRes.status() !== 404) {
-      companionLog.warn('Dọn dẹp target device không thành công', { deviceId, status: removeRes.status() });
+      companionLog.warn('Failed to clean up target device', { deviceId, status: removeRes.status() });
     }
     await ctx.dispose();
   },
 
-  // Campaign thông báo admin: JWT backoffice riêng (ADMIN_ACCESS_TOKEN), không qua TokenManager
+  // Admin notification campaign: dedicated backoffice JWT (ADMIN_ACCESS_TOKEN), bypasses TokenManager
   adminNotificationService: async ({ playwright }, use, testInfo) => {
     const ctx = await playwright.request.newContext({ baseURL: env.ADMIN_BASE_URL });
     const correlationId = randomUUID();
@@ -132,7 +132,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   },
   adminNotificationSteps: async ({ adminNotificationService }, use) => use(new AdminNotificationSteps(adminNotificationService)),
 
-  // Phụ thuộc vào api nên teardown chạy TRƯỚC khi context bị dispose
+  // Depends on api, so teardown runs BEFORE the context is disposed
   cleanup: async ({ api }, use) => {
     const registry = new CleanupRegistry();
     await use(registry);

@@ -1,4 +1,4 @@
-// src/core/utils/retry.ts: chỉ dùng cho request an toàn (GET)
+// src/core/utils/retry.ts: only use for safe requests (GET)
 const RETRYABLE = new Set([429, 502, 503, 504]);
 
 export async function withRetry<T extends { status(): number }>(
@@ -12,6 +12,6 @@ export async function withRetry<T extends { status(): number }>(
     } catch (e) {
       if (i >= attempts) throw e;
     }
-    await new Promise((r) => setTimeout(r, 200 * 2 ** i)); // backoff; bổ sung Retry-After nếu cần
+    await new Promise((r) => setTimeout(r, 200 * 2 ** i)); // backoff; add Retry-After support if needed
   }
 }

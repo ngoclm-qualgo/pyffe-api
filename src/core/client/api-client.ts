@@ -14,7 +14,7 @@ export class ApiClient {
     private readonly request: APIRequestContext,
     private readonly tokens: TokenManager,
     private readonly log: Logger,
-    private readonly correlationId: string, // một giá trị cho cả test/flow
+    private readonly correlationId: string, // one value shared across the whole test/flow
   ) {}
 
   get(path: string, o: Opts = {}) { return withRetry(() => this.send('GET', path, o), env.RETRY_COUNT); }
@@ -23,7 +23,7 @@ export class ApiClient {
   patch(path: string, data: unknown, o: Opts = {}) { return this.send('PATCH', path, { ...o, data }); }
   delete(path: string, o: Opts = {}) { return this.send('DELETE', path, o); }
 
-  /** Kiểm tra status mong đợi rồi trả về JSON. */
+  /** Check the expected status, then return the JSON. */
   async json<T = unknown>(res: APIResponse, expected: number | number[] = [200, 201]): Promise<T> {
     const ok = ([] as number[]).concat(expected).includes(res.status());
     if (!ok) throw new ApiError('http', `Unexpected status ${res.status()} for ${res.url()}`, res.status());
@@ -32,7 +32,7 @@ export class ApiClient {
 
   private async send(method: string, path: string, o: Opts): Promise<APIResponse> {
     const requestId = randomUUID();
-    const action = o.action ?? `${method} ${path}`; // hành động của người dùng; mặc định là method + path
+    const action = o.action ?? `${method} ${path}`; // user-facing action; defaults to method + path
     const started = Date.now();
     const token = await this.tokens.getAccessToken();
     try {
@@ -58,8 +58,8 @@ export class ApiClient {
     }
   }
 
-  // Gateway (Kong HMAC-validate) ký trên body cho POST/PUT/PATCH có body; GET/HEAD hoặc request không có body
-  // thì ký trên query params (rỗng nếu không có) — khớp logic pre-request script trong specs/requirement.md.
+  // Gateway (Kong HMAC-validate) signs the body for POST/PUT/PATCH that have a body; for GET/HEAD or a
+  // bodyless request, it signs the query params (empty object if none) — matches the pre-request script logic in specs/requirement.md.
   private signatureFor(method: string, data: unknown, params?: Record<string, string | number>): string {
     const hasBody = data !== undefined && data !== null && !(typeof data === 'object' && Object.keys(data as object).length === 0);
     const toSign = method === 'GET' || method === 'HEAD' || !hasBody ? (params ?? {}) : data;

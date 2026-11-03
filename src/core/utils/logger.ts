@@ -1,14 +1,14 @@
 import winston from 'winston';
 
-// CI chạy trên máy ảo không có TTY và cần log dạng JSON (dễ cho log aggregator/artifact);
-// local/dev thì in ra console dạng người đọc được, có màu.
+// CI runs on a VM without a TTY and needs JSON-formatted logs (easy for log aggregators/artifacts);
+// local/dev prints human-readable, colored console output.
 const isCI = !!process.env.CI;
 
 const REDACTED_KEYS = new Set([
   'access_token', 'refresh_token', 'accesstoken', 'refreshtoken', 'session', 'client_secret', 'password', 'authorization',
 ]);
 
-/** Chuyển Error thành object thường và che các key nhạy cảm ở mọi độ sâu. */
+/** Converts Error into a plain object and redacts sensitive keys at any depth. */
 function sanitize(value: unknown, seen = new WeakSet<object>()): unknown {
   if (value instanceof Error) {
     return { type: value.name, message: value.message, stack: value.stack };
@@ -23,13 +23,13 @@ function sanitize(value: unknown, seen = new WeakSet<object>()): unknown {
 }
 
 const sanitizeFormat = winston.format((info) => {
-  // Giữ nguyên các key Symbol (LEVEL/MESSAGE/SPLAT) của winston, chỉ làm sạch key chuỗi
+  // Keep winston's Symbol keys (LEVEL/MESSAGE/SPLAT) intact, only sanitize string keys
   const { level, message, ...meta } = info;
   return Object.assign(info, sanitize(meta) as object, { level, message });
 });
 
 const json = winston.format.combine(
-  winston.format.timestamp(), // datetime dạng ISO-8601
+  winston.format.timestamp(), // ISO-8601 datetime
   winston.format((info) => {
     info.level = info.level.toUpperCase(); // "INFO"/"DEBUG"/"WARN"/"ERROR"
     return info;
@@ -38,22 +38,22 @@ const json = winston.format.combine(
   winston.format.json(),
 );
 
-// Màu ANSI cho từng phần của dòng log để dễ phân biệt khi đọc terminal.
-// Luôn bật (Playwright worker không có TTY nên không dò TTY được); tắt bằng biến môi trường NO_COLOR.
+// ANSI colors for each part of the log line, to tell them apart when reading the terminal.
+// Always on (Playwright workers have no TTY so it can't be detected); disable with the NO_COLOR env var.
 const useColor = !process.env.NO_COLOR;
 const paint = (code: string) => (text: string) => (useColor ? `\x1b[${code}m${text}\x1b[0m` : text);
 const c = {
-  time: paint('90'), // xám
-  source: paint('35'), // tím
-  key: paint('34'), // xanh dương
-  string: paint('38;5;180'), // be (khác xanh lá của INFO)
-  number: paint('38;5;208'), // cam (khác vàng của WARN)
+  time: paint('90'), // gray
+  source: paint('35'), // purple
+  key: paint('34'), // blue
+  string: paint('38;5;180'), // beige (distinct from INFO's green)
+  number: paint('38;5;208'), // orange (distinct from WARN's yellow)
   other: paint('38;5;180'),
   muted: paint('90'),
 };
 const LEVEL_STYLE: Record<string, { badge: (t: string) => string; message: (t: string) => string }> = {
   debug: { badge: paint('1;90'), message: paint('90') },
-  info: { badge: paint('1;32'), message: paint('1;36') }, // INFO xanh lá, mô tả bước in đậm cyan
+  info: { badge: paint('1;32'), message: paint('1;36') }, // INFO green, step description bold cyan
   warn: { badge: paint('1;33'), message: paint('1;33') },
   error: { badge: paint('1;31'), message: paint('1;31') },
 };
@@ -88,13 +88,13 @@ export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL ?? 'info',
   defaultMeta: { env: process.env.TEST_ENV },
   format: isCI ? json : pretty,
-  // LOG_STDERR=1 đưa mọi log sang stderr để stdout chỉ chứa kết quả của lệnh CLI (xem scripts/cli.ts)
+  // LOG_STDERR=1 routes all logs to stderr so stdout only contains the CLI command's result (see scripts/cli.ts)
   transports: [new winston.transports.Console(process.env.LOG_STDERR ? { stderrLevels: ['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'] } : {})],
 });
 
 export type Logger = winston.Logger;
 
-/** Logger con gắn cố định `source` (module/service phát sinh log) để dễ lọc khi debug. */
+/** Child logger with a fixed `source` (the module/service emitting the log) to make debugging filters easier. */
 export function createLogger(source: string): Logger {
   return logger.child({ source });
 }

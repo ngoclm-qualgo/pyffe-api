@@ -10,11 +10,11 @@ export class CleanupRegistry {
 
   async run(): Promise<string[]> {
     const failed: string[] = [];
-    for (const t of this.tasks.reverse()) { // xóa theo thứ tự ngược quan hệ dữ liệu
+    for (const t of this.tasks.reverse()) { // delete in reverse order of data relationships
       try { await t.fn(); }
       catch (err) { failed.push(t.name); log.error(`Clean up ${t.name} failed`, { err, resource: t.name }); }
     }
     this.tasks = [];
-    return failed; // ghi ra file để scripts/cleanup-test-data.ts xử lý
+    return failed; // written to a file for scripts/cleanup-test-data.ts to handle
   }
 }
