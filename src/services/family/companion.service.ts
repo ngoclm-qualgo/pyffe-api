@@ -1,7 +1,7 @@
 // src/services/family/companion.service.ts
-// API object cho companion device (thiết bị thứ hai) xin tham gia/rời family bằng pairing code.
-// Dùng ApiClient riêng, gắn với accessToken của companion (xem TokenManager mode 'companion'), không phải owner.
-// Xem specs/familyservice.yml (POST /api/v1/companions/requests).
+// API object for the companion device (second device) requesting to join/leave a family via pairing code.
+// Uses a separate ApiClient bound to the companion's accessToken (see TokenManager mode 'companion'), not the owner's.
+// See specs/familyservice.yml (POST /api/v1/companions/requests).
 import type { ApiClient } from '../../core/client/api-client';
 
 type Opts = { language?: string };
@@ -10,7 +10,7 @@ export type CompanionRequestType = 'JOIN' | 'REJOIN' | 'LEAVE';
 export class CompanionService {
   constructor(private readonly api: ApiClient) {}
 
-  /** JOIN trả về pairing code để owner duyệt (FamilyService.approveInvite); LEAVE gỡ companion khỏi family. */
+  /** JOIN returns a pairing code for the owner to approve (FamilyService.approveInvite); LEAVE removes the companion from the family. */
   createRequest(deviceId: string, requestType: CompanionRequestType, opts: Opts = {}) {
     return this.api.post('/api/v1/companions/requests', { requestType }, {
       action: `Companion ${requestType.toLowerCase()} family request`,

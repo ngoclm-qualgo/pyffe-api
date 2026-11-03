@@ -1,12 +1,12 @@
 // src/services/family/family.service.ts
-// API object cho các endpoint family dùng trong các scenario thông báo: scam-alert, thiết bị, cài đặt, số điện thoại.
-// Xem specs/notification-push-postman-curl-guide.md. Create/delete/invite-approve (tạo FAMILY_ID/ACTOR_DEVICE_ID/
-// TARGET_DEVICE_ID cho test, xem src/core/fixtures/family-provisioning.ts) theo contract trong specs/familyservice.yml.
+// API object for family endpoints used in notification scenarios: scam-alert, device, settings, phone number.
+// See specs/notification-push-postman-curl-guide.md. Create/delete/invite-approve (creates FAMILY_ID/ACTOR_DEVICE_ID/
+// TARGET_DEVICE_ID for tests, see src/core/fixtures/family-provisioning.ts) per the contract in specs/familyservice.yml.
 import type { ApiClient } from '../../core/client/api-client';
 
 type Opts = { language?: string };
 
-/** familyId + device đóng vai actor (owner) trong family đó — dựng bởi src/core/fixtures/family-provisioning.ts. */
+/** familyId + the device acting as actor (owner) in that family — built by src/core/fixtures/family-provisioning.ts. */
 export type FamilyContext = { familyId: string; actorDeviceId: string };
 
 export type ScamAlertBody = {
@@ -20,7 +20,7 @@ export type ScamAlertBody = {
 export class FamilyService {
   constructor(private readonly api: ApiClient) {}
 
-  /** Tạo family mới; device gọi request (x-device-id) trở thành owner device. */
+  /** Create a new family; the device making the request (x-device-id) becomes the owner device. */
   create(ownerDeviceId: string, body: { name: string; countryCode: string }, opts: Opts = {}) {
     return this.api.post('/api/v1/families', body, {
       action: 'Create family',
@@ -28,7 +28,7 @@ export class FamilyService {
     });
   }
 
-  /** deviceFamily.familyId = family đang gắn với device gọi — dùng để lấy lại family khi create trả 409 FAMILY_OWNER_ALREADY_EXISTS. */
+  /** deviceFamily.familyId = the family bound to the calling device — used to retrieve the family when create returns 409 FAMILY_OWNER_ALREADY_EXISTS. */
   listMine(deviceId: string, opts: Opts = {}) {
     return this.api.get('/api/v1/families', {
       action: 'List my families',
@@ -36,7 +36,7 @@ export class FamilyService {
     });
   }
 
-  /** Chỉ thành công khi owner là thành viên cuối cùng còn lại trong family. */
+  /** Only succeeds when the owner is the last remaining member of the family. */
   deleteFamily(familyId: string, ownerDeviceId: string, opts: Opts = {}) {
     return this.api.delete(`/api/v1/families/${familyId}`, {
       action: 'Delete family',
@@ -44,7 +44,7 @@ export class FamilyService {
     });
   }
 
-  /** Owner duyệt yêu cầu JOIN bằng pairing code công ty companion vừa tạo; trả về deviceId của thiết bị vừa vào family. */
+  /** Owner approves a JOIN request using the pairing code the companion just created; returns the deviceId of the device that just joined the family. */
   approveInvite(familyId: string, ownerDeviceId: string, code: string, opts: Opts = {}) {
     return this.api.post(`/api/v1/families/${familyId}/invite/${code}/action/APPROVE`, undefined, {
       action: 'Approve family join invite',
