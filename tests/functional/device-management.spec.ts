@@ -1,16 +1,16 @@
 // tests/functional/device-management.spec.ts
-// Feature: quản lý thiết bị trong family — kích hoạt lại thiết bị bị khóa, xóa thiết bị thành viên.
-// Mỗi test tự dựng một companion device riêng (fixture `targetDevice`, đã ở trạng thái SUSPENDED khi join) và
-// tự dọn dẹp sau khi chạy — không còn khái niệm "cấp lại thiết bị" giữa các lần chạy như trước.
+// Feature: device management within a family — reactivate a locked device, remove a member's device.
+// Each test provisions its own companion device (fixture `targetDevice`, already in SUSPENDED state on join)
+// and cleans up after running — there's no longer a "reuse device" concept between runs like before.
 import { test } from '../../src/core/fixtures/api.fixture';
 
-test.describe('Quản lý thiết bị family', { tag: ['@svc-family', '@svc-notification', '@regression'] }, () => {
-  test('DEVICE-01 kích hoạt lại thiết bị đang bị khóa', async ({ deviceSteps, targetDevice }) => {
+test.describe('Family device management', { tag: ['@svc-family', '@svc-notification', '@regression'] }, () => {
+  test('DEVICE-01 reactivate a locked device', async ({ deviceSteps, targetDevice }) => {
     const res = await deviceSteps.activateSuspendedDevice(targetDevice);
     await deviceSteps.expectAccepted(res);
   });
 
-  test('DEVICE-02 xóa thiết bị của thành viên khác', async ({ deviceSteps, targetDevice }) => {
+  test('DEVICE-02 remove another member\'s device', async ({ deviceSteps, targetDevice }) => {
     const res = await deviceSteps.removeMemberDevice(targetDevice);
     await deviceSteps.expectAccepted(res);
   });

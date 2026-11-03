@@ -1,5 +1,5 @@
 // src/steps/family/scam-alert.steps.ts
-// Các bước kích hoạt cảnh báo lừa đảo (scam alert) và kiểm tra API chấp nhận.
+// Steps for triggering a scam alert and verifying the API accepts it.
 import { test, expect, type APIResponse } from '@playwright/test';
 import type { FamilyService, FamilyContext } from '../../services/family/family.service';
 import type { ScamAlertScenario } from '../../../tests/data/family.data';
@@ -13,7 +13,7 @@ export class ScamAlertSteps {
   constructor(private readonly family: FamilyService, private readonly ctx: FamilyContext) {}
 
   trigger(scenario: ScamAlertScenario, opts: { language?: string; level?: number } = {}): Promise<APIResponse> {
-    return test.step(`Kích hoạt cảnh báo ${scenario.scriptId} (${scenario.category})`, () =>
+    return test.step(`Trigger alert ${scenario.scriptId} (${scenario.category})`, () =>
       this.family.sendScamAlert(this.ctx.familyId, this.ctx.actorDeviceId, {
         scriptId: scenario.scriptId,
         category: scenario.category,
@@ -24,7 +24,7 @@ export class ScamAlertSteps {
   }
 
   expectAccepted(res: APIResponse) {
-    return test.step('Hệ thống chấp nhận và phát sinh sự kiện cảnh báo (204)', async () => {
+    return test.step('System accepts and raises the alert event (204)', async () => {
       await logResponseBody(log, 'Scam alert trigger response', res);
       expect(res.status()).toBe(204);
     });
