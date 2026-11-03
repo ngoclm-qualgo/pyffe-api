@@ -16,7 +16,7 @@ async function call<T>(path: string, init: RequestInit = {}, token?: string): Pr
       await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
       continue;
     }
-    if (!res.ok) throw new Error(`mail.tm ${init.method ?? 'GET'} ${path} trả lỗi HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`mail.tm ${init.method ?? 'GET'} ${path} returned HTTP error ${res.status}`);
     return (await res.json()) as T;
   }
 }
@@ -26,7 +26,7 @@ export class Mailbox {
 
   constructor(readonly address: string, private readonly token: string) {}
 
-  /** Chờ email mới (chưa đọc qua hàm này) tới hộp thư và trả về người gửi, tiêu đề, nội dung (html nếu có, nếu không thì text). */
+  /** Wait for a new email (not yet read via this function) to arrive and return sender, subject, body (html if present, otherwise text). */
   async waitForEmail(timeoutMs = 45_000): Promise<ReceivedEmail> {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
@@ -48,15 +48,15 @@ export class Mailbox {
       }
       await new Promise((r) => setTimeout(r, 2000));
     }
-    throw new Error(`Không nhận được email nào tới ${this.address} (hết thời gian chờ)`);
+    throw new Error(`No email received at ${this.address} (timed out)`);
   }
 }
 
-/** Tạo một hộp thư ngẫu nhiên mới. */
+/** Create a new random mailbox. */
 export async function createMailbox(): Promise<Mailbox> {
   const domains = await call<{ 'hydra:member': { domain: string; isActive: boolean }[] }>('/domains');
   const domain = domains['hydra:member'].find((d) => d.isActive)?.domain;
-  if (!domain) throw new Error('mail.tm không có domain khả dụng');
+  if (!domain) throw new Error('mail.tm has no available domain');
   const address = `pyffe-qa-${randomBytes(8).toString('hex')}@${domain}`;
   const password = randomBytes(12).toString('hex') + 'Aa1!';
   await call('/accounts', { method: 'POST', body: JSON.stringify({ address, password }) });
@@ -64,12 +64,16 @@ export async function createMailbox(): Promise<Mailbox> {
   return new Mailbox(address, token);
 }
 
-/** Phần người dùng nhìn thấy: bỏ style/script/comment/thẻ HTML (URL hạ tầng trong src/href không tính), giữ alt. */
+/** Visible-to-user part: strip style/script/comment/HTML tags (infrastructure URLs in src/href, image alt text, don't count). */
 export function visibleText(html: string): string {
   return html
     .replace(/<(style|script)[\s\S]*?<\/\1>|<!--[\s\S]*?-->/gi, ' ')
-    .replace(/<img\b[^>]*\balt="([^"]*)"[^>]*>/gi, ' $1 ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ');
+}
+
+/** Alt text of the email's logo <img>, for verifying the image itself rather than body content. */
+export function logoAltText(html: string): string | undefined {
+  return html.match(/<img\b[^>]*\balt="([^"]*)"[^>]*>/i)?.[1];
 }
