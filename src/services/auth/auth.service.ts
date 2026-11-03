@@ -13,20 +13,20 @@ const REFRESH_PATH = '/api/v1/auth/refresh';
 
 export class AuthService {
   constructor(
-    private readonly request: APIRequestContext, // tạo với baseURL: env.BASE_URL — path ở dưới luôn là tương đối
+    private readonly request: APIRequestContext, // created with baseURL: env.BASE_URL — paths below are always relative
     private readonly device: DeviceContext = defaultDevice(),
     private readonly correlationId: string = randomUUID(),
     private readonly language: string = 'en',
     private readonly log: Logger = createLogger('auth'),
   ) {}
 
-  /** Device id dùng để ký request/onboarding — các fixture tạo family/device cần header x-device-id khớp với device đã lấy JWT. */
+  /** Device id used to sign requests/onboarding — fixtures creating a family/device need the x-device-id header to match the device that got the JWT. */
   get deviceId(): string { return this.device.id; }
 
-  // Một bước challenge: trả response thô để negative test kiểm tra status/body.
-  // `action` là hành động của người dùng, dùng làm nội dung log.
+  // One challenge step: returns the raw response so negative tests can check status/body.
+  // `action` is the user action, used as the log message.
   challengeRaw(body: Record<string, unknown>, action = 'Send auth challenge'): Promise<APIResponse> {
-    return this.logged(action, () => this.request.post(CHALLENGE_PATH, {
+    return this.logged(action, 'POST', CHALLENGE_PATH, () => this.request.post(CHALLENGE_PATH, {
       data: body,
       headers: buildHeaders(body, this.device, this.correlationId, this.language),
       timeout: env.API_TIMEOUT_MS,
@@ -35,9 +35,9 @@ export class AuthService {
   initEmailRaw(email: string) {
     return this.challengeRaw({ authFlow: 'LOGIN', challengeName: 'INIT_CHALLENGE', clientMetadata: { type: 'EMAIL', email } }, 'Enter email to log in');
   }
-  /** Init onboarding không ký request (không có x-signature/headers thiết bị) để test request bị từ chối. */
+  /** Init onboarding without signing the request (no x-signature/device headers) to test the request gets rejected. */
   initEmailUnsignedRaw(email: string) {
-    return this.logged('Enter email to log in without signature', () => this.request.post(CHALLENGE_PATH, {
+    return this.logged('Enter email to log in without signature', 'POST', CHALLENGE_PATH, () => this.request.post(CHALLENGE_PATH, {
       data: { authFlow: 'LOGIN', challengeName: 'INIT_CHALLENGE', clientMetadata: { type: 'EMAIL', email } },
       timeout: env.API_TIMEOUT_MS,
     }));
@@ -53,7 +53,7 @@ export class AuthService {
   }
   refreshRaw(refreshToken: string, accessToken: string): Promise<APIResponse> {
     const body = { refreshToken };
-    return this.logged('Refresh onboarding session', () => this.request.post(REFRESH_PATH, {
+    return this.logged('Refresh onboarding session', 'POST', REFRESH_PATH, () => this.request.post(REFRESH_PATH, {
       data: body,
       headers: { ...buildHeaders(body, this.device, this.correlationId, this.language), Authorization: `Bearer ${accessToken}` },
       timeout: env.API_TIMEOUT_MS,
@@ -61,20 +61,24 @@ export class AuthService {
   }
 
   /**
-   * Luồng email: init, rồi làm theo challenge server yêu cầu (T&C, verify).
-   * Không truyền `email` và cũng không cấu hình TEST_USER_EMAIL thì tự tạo một hộp thư
-   * mail.tm dùng một lần cho lần onboarding này (chỉ hợp lý khi không dùng AUTH_TEST_OTP).
+   * Email flow: init, then follow whatever challenge the server requires (T&C, verify).
+   * If `email` isn't passed and TEST_USER_EMAIL isn't configured, creates a one-time
+   * mail.tm mailbox for this onboarding (only makes sense when not using AUTH_TEST_OTP).
    */
   async onboard(email?: string): Promise<TokenResponse> {
+    return this.tokensFrom(await this.onboardRaw(email));
+  }
+
+  /** Same email flow as `onboard`, but returns the final challenge response body as-is (tokens plus any other fields). */
+  async onboardRaw(email?: string): Promise<ChallengeResponse> {
     const target = email ?? env.TEST_USER_EMAIL ?? (await provisionEmailAddress());
     let session: string | undefined;
     this.log.info('Start logging in with email');
     let res = await this.step('init', () => this.initEmailRaw(target));
     for (let i = 0; i < 5; i++) {
-      const tokens = extractTokens(res);
-      if (tokens) { this.log.info('Logged in with email'); return tokens; }
+      if (extractTokens(res)) { this.log.info('Logged in with email'); return res; }
       session = res.session ?? session;
-      if (!session) throw new ApiError('contract', 'Response thiếu session');
+      if (!session) throw new ApiError('contract', 'Response is missing session');
       const next = res.challengeName;
       if (next === 'TERM_CONDITION') {
         res = await this.step('accept-terms', () => this.acceptTermsRaw(session!));
@@ -82,13 +86,13 @@ export class AuthService {
         const code = await getVerificationCode(target);
         res = await this.step('verify', () => this.verifyOtpRaw(session!, code));
       } else {
-        throw new ApiError('business', `Challenge không hỗ trợ: ${next}`);
+        throw new ApiError('business', `Unsupported challenge: ${next}`);
       }
     }
-    throw new ApiError('business', 'Onboarding không hoàn tất sau 5 bước');
+    throw new ApiError('business', 'Onboarding did not complete after 5 steps');
   }
 
-  /** Luồng companion: không cần email hay OTP, dùng code challenge; làm theo challenge server yêu cầu. */
+  /** Companion flow: no email or OTP needed, uses code challenge; follows whatever challenge the server requires. */
   async onboardCompanion(): Promise<TokenResponse> {
     const { verifier, challenge } = pkcePair();
     this.log.info('Start logging in as companion');
@@ -100,7 +104,7 @@ export class AuthService {
       const tokens = extractTokens(res);
       if (tokens) { this.log.info('Logged in as companion'); return tokens; }
       session = res.session ?? session;
-      if (!session) throw new ApiError('contract', 'Response thiếu session');
+      if (!session) throw new ApiError('contract', 'Response is missing session');
       if (res.challengeName === 'TERM_CONDITION') {
         res = await this.step('companion-terms', () => this.acceptTermsRaw(session!));
       } else if (res.challengeName === 'CODE_CHALLENGE') {
@@ -108,37 +112,37 @@ export class AuthService {
           this.challengeRaw({ authFlow: 'LOGIN', challengeName: 'CODE_CHALLENGE', session, clientMetadata: { codeVerifier: verifier } }, 'Confirm companion code'),
         );
       } else {
-        throw new ApiError('business', `Challenge không hỗ trợ: ${res.challengeName}`);
+        throw new ApiError('business', `Unsupported challenge: ${res.challengeName}`);
       }
     }
-    throw new ApiError('business', 'Onboarding companion không hoàn tất sau 5 bước');
+    throw new ApiError('business', 'Companion onboarding did not complete after 5 steps');
   }
 
-  /** Lấy token từ body của refresh. */
+  /** Extract tokens from the refresh response body. */
   tokensFrom(body: unknown): TokenResponse {
     const tokens = extractTokens(body);
-    if (!tokens) throw new ApiError('contract', 'Response không chứa accessToken và refreshToken');
+    if (!tokens) throw new ApiError('contract', 'Response does not contain accessToken and refreshToken');
     return tokens;
   }
 
-  // Ghi log hành động của người dùng kèm status và thời gian phản hồi; lỗi transport log ở mức error
-  private async logged(action: string, fn: () => Promise<APIResponse>): Promise<APIResponse> {
+  // Log the user action with method, endpoint, status and response time; transport errors are logged at error level
+  private async logged(action: string, method: string, endpoint: string, fn: () => Promise<APIResponse>): Promise<APIResponse> {
     const started = Date.now();
     try {
       const res = await fn();
-      this.log.info(action, { status: res.status(), durationMs: Date.now() - started });
+      this.log.info(action, { method, endpoint, status: res.status(), durationMs: Date.now() - started });
       return res;
     } catch (err) {
-      this.log.error(`${action} failed`, { durationMs: Date.now() - started, err });
+      this.log.error(`${action} failed`, { method, endpoint, durationMs: Date.now() - started, err });
       throw err;
     }
   }
 
-  // Gom một bước challenge vào test.step để báo cáo/trace thấy rõ từng lệnh gọi trong luồng onboarding,
-  // thay vì một lệnh await onboard() không rõ ràng.
+  // Wrap a challenge step in test.step so reports/traces show each call in the onboarding flow clearly,
+  // instead of one opaque await onboard() call.
   private step(name: string, fn: () => Promise<APIResponse>): Promise<ChallengeResponse> {
     const run = async () => this.expectOk(await fn(), name);
-    // Ngoài test runner (lệnh CLI trong scripts/) không có test.step, chạy thẳng
+    // Outside the test runner (CLI commands in scripts/) there's no test.step, run directly
     try { test.info(); } catch { return run(); }
     return test.step(name, run);
   }
