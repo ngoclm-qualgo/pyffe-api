@@ -1,9 +1,9 @@
 // tests/e2e/session-lifecycle.spec.ts
-// Journey: người dùng onboarding, dùng phiên, gia hạn liên tục và token cũ không còn dùng được.
+// Journey: user onboards, uses the session, refreshes repeatedly, and the old token becomes unusable.
 import { test } from '../../src/core/fixtures/api.fixture';
 
-test.describe('Vòng đời phiên onboarding', { tag: ['@svc-auth', '@regression'] }, () => {
-  test('E2E-01 onboarding, gia hạn hai lần liên tiếp, token cũ bị từ chối', async ({ onboardingSteps, sessionSteps }) => {
+test.describe('Onboarding session lifecycle', { tag: ['@svc-auth', '@regression'] }, () => {
+  test('E2E-01 onboard, refresh twice in a row, old token is rejected', async ({ onboardingSteps, sessionSteps }) => {
     const t1 = await sessionSteps.onboard();
     await onboardingSteps.expectValidSession(t1);
 
